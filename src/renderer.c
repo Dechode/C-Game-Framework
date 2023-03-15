@@ -110,7 +110,7 @@ uint32_t createShader(const char *pathFrag, const char *pathVert)
 
 void initShaders(RenderState2D *state)
 {
-    state->defaultShader = createShader("shaders/default.frag.glsl", "shaders/default.vert.glsl");
+    state->defaultShader = createShader("src/shaders/default.frag.glsl", "src/shaders/default.vert.glsl");
 
     mat4x4_ortho(state->projection, 0, state->windowWidth, 0, state->windowHeight, -2, 2);
 

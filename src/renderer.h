@@ -28,7 +28,6 @@ typedef struct
 	uint32_t defaultTexture;
 
     mat4x4 projection;
-
 } RenderState2D;
 
 typedef struct
