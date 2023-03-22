@@ -2,6 +2,8 @@
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_keycode.h>
 #include <SDL2/SDL_version.h>
+#include <math.h>
+#include <sys/time.h>
 #include <stdio.h>
 
 #define WIDTH 800
@@ -100,59 +102,70 @@ void run(SDL_Window* window)
 	int rows = 4;
 	int cols = BLOCK_AMOUNT / rows;
 	int blockGap = 20;
-	Block blocks[BLOCK_AMOUNT];
 	vec4 color = {1.0f, 1.0f, 1.0f, 1.0f};
 	vec2 blockSize = {60.0f, 20.0f};
+	
+	Block blocks[BLOCK_AMOUNT];
 	
 	for (int y = 0; y < rows; y++)
 	{
 		for (int x = 0; x < cols; x++)
 		{
 			float positionY = HEIGHT - ( 40.0f + (blockSize[1] + 20.0f) * y +1);
-			float positionX = blockSize[0] + (blockSize[0] + blockGap) * x;
+			float positionX = blockSize[0] + 0.5 * blockGap + (blockSize[0] + blockGap) * x;
 			int i = x + (y * cols);
-			initBlock(&blocks[i], color,blockSize, (vec2) {positionX, positionY}, 1);
+			initBlock(&blocks[i], color, blockSize, (vec2){positionX, positionY}, 1);
 		}
 	}
 
 	Block pad;
-	pad.position[0] = 0.5f * WIDTH;
-	pad.position[1] = 20.0f;
-	pad.color[0] = 1.0f;
-	pad.color[1] = 1.0f;
-	pad.color[2] = 1.0f;
-	pad.color[3] = 1.0f;
+	initBlock(&pad, (vec4){1.0f, 1.0f, 1.0f, 1.0f}, (vec2){100.0f, 20.0f},(vec2){0.5f * WIDTH, 20.0f}, 1);
 
-	pad.size[0] = 100.0f;
-	pad.size[1] = 20.0f;
-	pad.enabled = 1;
+	Block ball;
+	initBlock(&ball, (vec4){1.0f, 1.0f, 1.0f, 1.0f}, (vec2){10.0f, 10.0f},(vec2){0.5f * WIDTH, 60.0f}, 1);
 
-
-	// Event handling
 	InputState inputState;
 	SDL_Event event;
 
+	struct timeval t0, t1;
+	float deltaTime = 0.0f;
+
 	while (!shouldQuit)
 	{
+		gettimeofday(&t0,0);
+
+		// Event handling
 		handleInputEvents(&event, &inputState);
 		
 		// Update game entities
 		if (inputState.Left == PRESSED)
-			pad.position[0] -= 5;
+			pad.position[0] -= 500.0f * deltaTime;
 		if (inputState.right == PRESSED)
-			pad.position[0] += 5;
+			pad.position[0] += 500.0f * deltaTime;
+
+		ball.position[1] += 5.0f;
+
+		// Collision checking
+		
 
 		// Rendering
 		renderBegin();
 
 		renderQuad(0, pad.position, pad.size, pad.color);
+		renderQuad(0, ball.position, ball.size, ball.color);
 
 		for (int i = 0; i < BLOCK_AMOUNT; i++)
 		{
+			if (!blocks[i].enabled)
+				continue;
 			renderQuad(0, blocks[i].position, blocks[i].size, blocks[i].color);
 		}
 
 		renderEnd(window);
+		gettimeofday(&t1,0);
+		deltaTime = (t1.tv_sec - t0.tv_sec) * 1000.0f + (t1.tv_usec - t0.tv_usec) / 1000.0f;
+		deltaTime *= 0.001f;
+		printf("deltaTime = %f\n", deltaTime);
 	}
 
 	// Cleanup
@@ -170,3 +183,4 @@ int main(int argc, char** argv)
 
 	SDL_DestroyWindow(window);
 }
+
