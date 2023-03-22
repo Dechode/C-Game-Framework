@@ -270,9 +270,13 @@ void renderEnd(SDL_Window* window)
     SDL_GL_SwapWindow(window);
 }
 
-void renderQuad(uint32_t texture, uint32_t* shader, vec2 pos, vec2 size, vec4 color)
+void renderQuad(int texture, vec2 pos, vec2 size, vec4 color)
 {
-    glUseProgram(*shader);
+    glUseProgram(renderState.defaultShader);
+
+	int tex = texture;
+	if (tex <= 0)
+		tex = renderState.defaultTexture;
 
     mat4x4 model;
     mat4x4_identity(model);
@@ -280,11 +284,11 @@ void renderQuad(uint32_t texture, uint32_t* shader, vec2 pos, vec2 size, vec4 co
     mat4x4_translate(model, pos[0], pos[1], 0);
     mat4x4_scale_aniso(model, model, size[0], size[1], 1);
 
-    glUniformMatrix4fv(glGetUniformLocation(*shader, "model"), 1, GL_FALSE, &model[0][0]);
-    glUniform4fv(glGetUniformLocation(*shader, "color"),1, color);
+    glUniformMatrix4fv(glGetUniformLocation(renderState.defaultShader, "model"), 1, GL_FALSE, &model[0][0]);
+    glUniform4fv(glGetUniformLocation(renderState.defaultShader, "color"),1, color);
 
     glBindVertexArray(renderState.quadVao);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    glBindTexture(GL_TEXTURE_2D, tex);
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL);
     glBindVertexArray(0);
@@ -350,10 +354,7 @@ void renderQuadLine(vec2 pos, vec2 size, vec4 color, int lineWidth)
 
 void drawSprite(Sprite* sprite)
 {
-	vec2 pos;
-	pos[0] = sprite->position[0];
-	pos[1] = sprite->position[1];
-	renderQuad(sprite->texture.texture, &renderState.defaultShader, pos, sprite->size, (vec4){1.0, 1.0, 1.0, 1.0});
+	renderQuad(renderState.defaultTexture, sprite->position, sprite->size, (vec4){1.0, 1.0, 1.0, 1.0});
 }
 
 

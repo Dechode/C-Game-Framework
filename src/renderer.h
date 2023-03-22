@@ -30,6 +30,7 @@ typedef struct
     mat4x4 projection;
 } RenderState2D;
 
+
 typedef struct
 {
 	uint32_t texture;
@@ -64,7 +65,7 @@ void initLine(uint32_t *vao, uint32_t *vbo);
 void renderBegin(void);
 void renderEnd(SDL_Window* window);
 
-void renderQuad(uint32_t texture, uint32_t* shader, vec2 pos, vec2 size, vec4 color); 
+void renderQuad(int texture, vec2 pos, vec2 size, vec4 color); 
 void renderTriangle(vec2 pos, vec2 size, vec4 color);
 void renderLineSegment(vec2 start, vec2 end, vec4 color, int lineWidth);
 void renderQuadLine(vec2 pos, vec2 size, vec4 color, int lineWidth);
