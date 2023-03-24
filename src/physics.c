@@ -64,38 +64,32 @@ void penetrationVectorAABB(vec2 r, AABB aabb)
 }
 
 
-//void physicsInit(void) {
-//    state.bodyList = arrayListCreate(sizeof(Body), 0);
-//}
+void initKinematicBody(KinematicBody2D* body, const vec2 size, const vec2 position)
+{
+	body->aabb.position[0] = position[0];
+	body->aabb.position[1] = position[1];
+	body->aabb.halfSize[0] = size[0] * 0.5f;
+	body->aabb.halfSize[1] = size[1] * 0.5f;
+	body->position[0] = position[0];
+	body->position[1] = position[1];
+	body->size[0] = size[0];
+	body->size[1] = size[1];
+	body->velocity[0] = 0.0f;
+	body->velocity[1] = 0.0f;
+}
 
-//void physicsUpdate(void){
-//    Body *body;
-//
-//    for (uint32_t i = 0; i < state.bodyList->len; ++i) {
-//        body = arrayListGet(state.bodyList, i);
-//        body->velocity[0] += body->acceleration[0] * globalState.time.delta;
-//        body->velocity[1] += body->acceleration[1] * globalState.time.delta;
-//        body->aabb.position[0] += body->velocity[0] * globalState.time.delta;
-//        body->aabb.position[1] += body->velocity[1] * globalState.time.delta;
-//    }
-//}
+void updateKinematicBody2D(KinematicBody2D* body, const float dt)
+{
+	body->position[0] += body->velocity[0] * dt;
+	body->position[1] += body->velocity[1] * dt;
+	body->aabb.position[0] = body->position[0];
+	body->aabb.position[1] = body->position[1];
+}
 
-//size_t physicsBodyCreate(vec2 position, vec2 size) {
-//    Body body = {
-//        .aabb = {
-//            .position = { position[0], position[1] },
-//            .halfSize = { size[0], size[1] },
-//        },
-//        .velocity = { 0, 0 },
-//    };
-//
-//    if (arrayListAppend(state.bodyList, &body) == (size_t)-1)
-//        ERROR_EXIT("Could not append body to list\n");
-//
-//    return state.bodyList->len - 1;
-//}
+void moveKinematicBody2D(KinematicBody2D* body, const vec2 direction, const float speed)
+{
+	body->velocity[0] = direction[0] * speed;
+	body->velocity[1] = direction[1] * speed;
+}
 
-//Body *physicsBodyGet(size_t index) {
-//    return arrayListGet(state.bodyList, index);
-//}
 

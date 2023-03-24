@@ -1,21 +1,22 @@
 #include "linmath.h"
 
-typedef struct aabb {
+typedef struct 
+{
     vec2 position;
     vec2 halfSize;
 } AABB;
 
-typedef struct body {
+typedef struct 
+{
     AABB aabb;
+	vec2 size;
+	vec2 position;
     vec2 velocity;
-    vec2 acceleration;
-} Body;
+} KinematicBody2D;
 
-//void physicsInit(void);
-//void physicsUpdate(void);
-
-//size_t physicsBodyCreate(vec2 position, vec2 size);
-//Body *physicsBodyGet(size_t index);
+void initKinematicBody(KinematicBody2D* body, const vec2 size, const vec2 position);
+void updateKinematicBody2D(KinematicBody2D* body, const float dt);
+void moveKinematicBody2D(KinematicBody2D* body, const vec2 direction, const float speed);
 
 bool physicsPointIntersectAABB(vec2 point, AABB aabb);
 bool physicsAABBIntersectAABB(AABB a, AABB b);
