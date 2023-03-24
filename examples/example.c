@@ -1,11 +1,12 @@
-#include "../src/renderer.h"
-#include "../src/physics.h"
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_keycode.h>
 #include <SDL2/SDL_version.h>
 #include <math.h>
 #include <sys/time.h>
 #include <stdio.h>
+#include "../src/renderer.h"
+#include "../src/physics.h"
+#include "../src/input.h"
 
 #define WIDTH 800
 #define HEIGHT 600
@@ -14,92 +15,22 @@
 
 static int shouldQuit = 0;
 
-typedef enum 
-{
-	UNPRESSED,
-	PRESSED,
-	HELD,
-}KeyState;
 
 typedef struct
 {
-	KeyState Left;
-	KeyState right;
-} InputState;
-
-void handleInputEvents(SDL_Event* event, InputState* inputState)
-{
-	while (SDL_PollEvent(event))
-	{
-		switch (event->type)
-		{
-			case SDL_QUIT:
-				shouldQuit = 1;
-				break;
-			case SDL_KEYDOWN:
-				 switch( event->key.keysym.sym ){
-                    case SDLK_LEFT:
-                        inputState->Left = PRESSED;
-                        break;
-                    case SDLK_RIGHT:
-                        inputState->right = PRESSED;
-                        break;
-					case SDLK_ESCAPE:
-						shouldQuit = 1;
-						break;
-                    default:
-                        break;
-					}
-				break;
-
-			case SDL_KEYUP:
-				switch( event->key.keysym.sym ){
-					case SDLK_LEFT:
-                        inputState->Left = UNPRESSED;
-                        break;
-                    case SDLK_RIGHT:
-                        inputState->right = UNPRESSED;
-                        break;
-                    default:
-                        break;
-					}
-				break;
-
-			
-			default:
-				break;
-		}
-    }
-}
-
-typedef struct
-{
-	Body body;
-	vec2 size;
+	KinematicBody2D body;
 	int enabled;
 	vec4 color;
 } Block;
 
-void initBlock(Block* block, vec4 color, vec2 size, vec2 position, int enabled)
+void initBlock(Block* block, const vec4 color, const vec2 size, const vec2 position, const int enabled)
 {
 	block->color[0] = color[0];
 	block->color[1] = color[1];
 	block->color[2] = color[2];
 	block->color[3] = color[3];
 
-	block->size[0] = size[0];
-	block->size[1] = size[1];
-	block->body.aabb.halfSize[0] = 0.5f * block->size[0];
-	block->body.aabb.halfSize[1] = 0.5f * block->size[1];
-
-	block->body.aabb.position[0] = position[0]; 
-	block->body.aabb.position[1] = position[1]; 
-
-	block->body.velocity[0] = 0.0f;
-	block->body.velocity[1] = 0.0f;
-
-	block->body.acceleration[0] = 0.0f;
-	block->body.acceleration[1] = 0.0f;
+	initKinematicBody(&block->body, size, position);
 
 	block->enabled = enabled;
 }
@@ -121,8 +52,9 @@ void run(SDL_Window* window)
 		{
 			float positionY = HEIGHT - ( 40.0f + (blockSize[1] + 20.0f) * y +1);
 			float positionX = blockSize[0] + 0.5 * blockGap + (blockSize[0] + blockGap) * x;
+			vec2 pos = {positionX, positionY};
 			int i = x + (y * cols);
-			initBlock(&blocks[i], color, blockSize, (vec2){positionX, positionY}, 1);
+			initBlock(&blocks[i], color, blockSize, pos, 1);
 		}
 	}
 
@@ -174,35 +106,36 @@ void run(SDL_Window* window)
 			}
 		}
 
-		if (ball.body.aabb.position[0] < 0 || ball.body.aabb.position[0] + ball.size[0] > WIDTH)
+		if (ball.body.position[0] < 0 || ball.body.position[0] + ball.body.size[0] > WIDTH)
 		{
 			ball.body.velocity[0] *= -1;
-			ball.body.aabb.position[0] += ball.body.velocity[0] * 450.0f * deltaTime;
+			ball.body.position[0] += ball.body.velocity[0] * 450.0f * deltaTime;
 		}
 
-		if (ball.body.aabb.position[1] < 0 || ball.body.aabb.position[1] + ball.size[1] > HEIGHT)
+		if (ball.body.position[1] < 0 || ball.body.position[1] + ball.body.size[1] > HEIGHT)
 		{
 			ball.body.velocity[1] *= -1;
-			ball.body.aabb.position[1] += ball.body.velocity[1] * 450.0f * deltaTime;
+			ball.body.position[1] += ball.body.velocity[1] * 450.0f * deltaTime;
 		}
 
 		if (physicsAABBIntersectAABB(ball.body.aabb, pad.body.aabb))
 		{
-			ball.body.velocity[0] *= -1;
+			// TODO
+			ball.body.velocity[0] *= 1;
 			ball.body.velocity[1] *= -1;
 		}
 
 		// Rendering
 		renderBegin();
 
-		renderQuad(0, pad.body.aabb.position, pad.size, pad.color);
-		renderQuad(0, ball.body.aabb.position, ball.size, ball.color);
+		renderQuad(0, pad.body.position, pad.body.size, pad.color);
+		renderQuad(0, ball.body.position, ball.body.size, ball.color);
 
 		for (int i = 0; i < BLOCK_AMOUNT; i++)
 		{
 			if (!blocks[i].enabled)
 				continue;
-			renderQuad(0, blocks[i].body.aabb.position, blocks[i].size, blocks[i].color);
+			renderQuad(0, blocks[i].body.position, blocks[i].body.size, blocks[i].color);
 		}
 
 		// End time of the frame and delta time
