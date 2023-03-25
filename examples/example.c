@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include "../src/renderer.h"
 #include "../src/physics.h"
-#include "../src/input.h"
+#include "../src/event.h"
 
 #define WIDTH 800
 #define HEIGHT 600
@@ -63,8 +63,7 @@ void run(SDL_Window* window)
 
 	Block ball;
 	initBlock(&ball, (vec4){1.0f, 1.0f, 1.0f, 1.0f}, (vec2){10.0f, 10.0f},(vec2){0.5f * WIDTH, 60.0f}, 1);
-	ball.body.velocity[0] = 1.0f;
-	ball.body.velocity[1] = 1.0f;
+	moveKinematicBody2D(&ball.body, (vec2){0.7f, 0.9f}, 350.0f);
 	
 
 	InputState inputState;
@@ -81,16 +80,18 @@ void run(SDL_Window* window)
 		gettimeofday(&t0,0);
 
 		// Event handling
-		handleInputEvents(&event, &inputState);
+		handleEvents(&event, &inputState, &shouldQuit);
+		shouldQuit = shouldQuit || inputState.escape;
 		
 		// Update game entities
+		moveKinematicBody2D(&pad.body, (vec2){0.0f, 0.0f}, 0.0f);
 		if (inputState.Left == PRESSED)
-			pad.body.aabb.position[0] -= 500.0f * deltaTime;
+			moveKinematicBody2D(&pad.body, (vec2){-1.0f, 0.0f}, 500.0f);
 		if (inputState.right == PRESSED)
-			pad.body.aabb.position[0] += 500.0f * deltaTime;
+			moveKinematicBody2D(&pad.body, (vec2){1.0f, 0.0f}, 500.0f);
 
-		ball.body.aabb.position[1] += ball.body.velocity[1] * 350.0f * deltaTime;
-		ball.body.aabb.position[0] += ball.body.velocity[0] * 350.0f * deltaTime;
+		updateKinematicBody2D(&pad.body, deltaTime);
+		updateKinematicBody2D(&ball.body, deltaTime);
 
 		// Collision checking
 		for (int i = 0; i < BLOCK_AMOUNT; i++)
