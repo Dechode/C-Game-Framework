@@ -1,5 +1,6 @@
 #include "renderer.h"
 #include "glad/glad.h"
+#include "linmath.h"
 #include <SDL2/SDL_video.h>
 #include <stdint.h>
 #include <string.h>
@@ -251,12 +252,12 @@ void initRenderer(void)
 {
 	initTriangle(&renderState.triangleVao, &renderState.triangleVbo);
 	initQuad(&renderState.quadVao, &renderState.quadVbo, &renderState.quadEbo);
-    initLine(&renderState.lineVao, &renderState.lineVbo);
-    initShaders(&renderState);
-    initColorTexture(&renderState.defaultTexture);
+  initLine(&renderState.lineVao, &renderState.lineVbo);
+  initShaders(&renderState);
+  initColorTexture(&renderState.defaultTexture);
 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void renderBegin(void)
@@ -270,41 +271,45 @@ void renderEnd(SDL_Window* window)
     SDL_GL_SwapWindow(window);
 }
 
-void renderQuad(int texture, vec2 pos, vec2 size, vec4 color)
+void renderQuad(int shader, int texture, const float rotation, const vec3 pos, const vec2 size, const vec4 color)
 {
-    glUseProgram(renderState.defaultShader);
+	if (texture <= 0)
+  {
+		texture = renderState.defaultTexture;
+  }
+  if (shader <= 0)
+  {
+    shader = renderState.defaultShader;
+  }
+  glUseProgram(shader);
 
-	int tex = texture;
-	if (tex <= 0)
-		tex = renderState.defaultTexture;
+  mat4x4 model;
+  mat4x4_identity(model);
+  mat4x4_translate(model, pos[0], pos[1], pos[2]);
+  mat4x4_rotate(model, model, 0.0f, 0.0f, 1.0f, rotation);
+  mat4x4_scale_aniso(model, model, size[0], size[1], 1);
 
-    mat4x4 model;
-    mat4x4_identity(model);
+  glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE, &model[0][0]);
+  glUniform4fv(glGetUniformLocation(shader, "color"), 1, color);
 
-    mat4x4_translate(model, pos[0], pos[1], 0);
-    mat4x4_scale_aniso(model, model, size[0], size[1], 1);
+  glBindVertexArray(renderState.quadVao);
+  glBindTexture(GL_TEXTURE_2D, texture);
 
-    glUniformMatrix4fv(glGetUniformLocation(renderState.defaultShader, "model"), 1, GL_FALSE, &model[0][0]);
-    glUniform4fv(glGetUniformLocation(renderState.defaultShader, "color"),1, color);
-
-    glBindVertexArray(renderState.quadVao);
-    glBindTexture(GL_TEXTURE_2D, tex);
-
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL);
-    glBindVertexArray(0);
+  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL);
+  glBindVertexArray(0);
 }
 
 void renderTriangle(vec2 pos, vec2 size, vec4 color)
 {
 	glUseProgram(renderState.defaultShader);
 	mat4x4 model;
-    mat4x4_identity(model);
+  mat4x4_identity(model);
 
-    mat4x4_translate(model, pos[0], pos[1], 0);
-    mat4x4_scale_aniso(model, model, size[0], size[1], 1);
+  mat4x4_translate(model, pos[0], pos[1], 0);
+  mat4x4_scale_aniso(model, model, size[0], size[1], 1);
 
-    glUniformMatrix4fv(glGetUniformLocation(renderState.defaultShader, "model"), 1, GL_FALSE, &model[0][0]);
-    glUniform4fv(glGetUniformLocation(renderState.defaultShader, "color"),1, color);
+  glUniformMatrix4fv(glGetUniformLocation(renderState.defaultShader, "model"), 1, GL_FALSE, &model[0][0]);
+  glUniform4fv(glGetUniformLocation(renderState.defaultShader, "color"),1, color);
 	glBindVertexArray(renderState.triangleVao);
 	glBindTexture(GL_TEXTURE_2D, renderState.defaultTexture);
 	glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -354,7 +359,9 @@ void renderQuadLine(vec2 pos, vec2 size, vec4 color, int lineWidth)
 
 void drawSprite(Sprite* sprite)
 {
-	renderQuad(renderState.defaultTexture, sprite->position, sprite->size, (vec4){1.0, 1.0, 1.0, 1.0});
+	renderQuad(renderState.defaultShader, renderState.defaultTexture,
+             sprite->rotation, sprite->position, sprite->size,
+             (vec4){1.0, 1.0, 1.0, 1.0});
 }
 
 

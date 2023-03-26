@@ -15,7 +15,6 @@
 
 static int shouldQuit = 0;
 
-
 typedef struct
 {
 	KinematicBody2D body;
@@ -30,7 +29,7 @@ void initBlock(Block* block, const vec4 color, const vec2 size, const vec2 posit
 	block->color[2] = color[2];
 	block->color[3] = color[3];
 
-	initKinematicBody(&block->body, size, position);
+	initKinematicBody2D(&block->body, size, position, 0.0f);
 
 	block->enabled = enabled;
 }
@@ -50,7 +49,7 @@ void run(SDL_Window* window)
 	{
 		for (int x = 0; x < cols; x++)
 		{
-			float positionY = HEIGHT - ( 40.0f + (blockSize[1] + 20.0f) * y +1);
+			float positionY = HEIGHT - ( 2 * blockGap + (blockSize[1] + blockGap) * y + 1);
 			float positionX = blockSize[0] + 0.5 * blockGap + (blockSize[0] + blockGap) * x;
 			vec2 pos = {positionX, positionY};
 			int i = x + (y * cols);
@@ -77,7 +76,7 @@ void run(SDL_Window* window)
 	while (!shouldQuit)
 	{
 		// Start time of the frame
-		gettimeofday(&t0,0);
+		gettimeofday(&t0, 0);
 
 		// Event handling
 		handleEvents(&event, &inputState, &shouldQuit);
@@ -140,7 +139,7 @@ void run(SDL_Window* window)
 		}
 
 		// End time of the frame and delta time
-		gettimeofday(&t1,0);
+		gettimeofday(&t1, 0);
 		deltaTime = (t1.tv_sec - t0.tv_sec) * 1000.0f + (t1.tv_usec - t0.tv_usec) / 1000.0f;
 		deltaTime *= 0.001f;
 
@@ -165,5 +164,7 @@ int main(int argc, char** argv)
 	run(window);
 
 	SDL_DestroyWindow(window);
+
+	return 0;
 }
 

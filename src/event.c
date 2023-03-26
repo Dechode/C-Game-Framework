@@ -14,7 +14,7 @@ void handleEvents(SDL_Event* event, InputState* inputState, int* shouldQuit)
 			default:
 				break;
 		}
-		handleInputEvents(event, inputState);
+		handleInputEvents(event, inputState, shouldQuit);
 	}
 
 }

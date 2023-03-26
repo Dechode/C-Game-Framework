@@ -43,6 +43,7 @@ typedef struct
 typedef struct
 {
 	vec3 position;
+	float rotation;
 	vec2 size;
 	vec2 scale;
 	ImageTexture texture;
@@ -65,7 +66,7 @@ void initLine(uint32_t *vao, uint32_t *vbo);
 void renderBegin(void);
 void renderEnd(SDL_Window* window);
 
-void renderQuad(int texture, vec2 pos, vec2 size, vec4 color); 
+void renderQuad(int shader, int texture, const float rotation, const vec3 pos, const vec2 size, const vec4 color);
 void renderTriangle(vec2 pos, vec2 size, vec4 color);
 void renderLineSegment(vec2 start, vec2 end, vec4 color, int lineWidth);
 void renderQuadLine(vec2 pos, vec2 size, vec4 color, int lineWidth);

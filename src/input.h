@@ -15,5 +15,6 @@ typedef struct
 	KeyState escape;
 } InputState;
 
-void handleInputEvents(SDL_Event* event, InputState* inputState);
+void handleInputEvents(SDL_Event* event, InputState* inputState, int* shouldQuit);
+void initInputState(InputState* inputState);
 
