@@ -50,7 +50,7 @@ void run(SDL_Window *window) {
   for (int i = 0; i < BODY_COUNT; i++) {
     physicsBodiesList[i] = createPhysicsBody2D(
         (vec2){10.0f, 10.0f}, (vec2){140.0f + (i * 20), (1 + i) * 20.0f},
-        (vec2){30.0f, 33.0f}, 0.0f, 100.0f, 1.0f, 1.0f, 1, CIRCLE);
+        (vec2){30.0f, 33.0f}, 0.0f, 100.0f, 1.0f, 1.0f, 1, RECTANGLE);
     printf("Body id %d = %zu\n", i, physicsBodiesList[i]);
   }
   while (!shouldQuit) {
