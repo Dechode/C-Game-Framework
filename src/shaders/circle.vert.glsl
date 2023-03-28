@@ -1,29 +1,19 @@
 #version 330
-layout(location = 0) in vec3 worldPosition;
-layout(location = 1) in vec3 localPosition;
-layout(location = 2) in vec4 color;
-layout(location = 3) in float thickness;
-layout(location = 4) in float fade;
 
-layout(std140, binding = 0) uniform camera
-{
-    mat4 viewProjection;
-};
+layout (location = 0) in vec3 a_pos;
+layout (location = 1) in vec2 a_uv;
 
-struct VertexOutput
-{
-    vec3 localPosition;
-    vec4 color;
-    vec2 thickness;
-    float fade;
-};
+out vec2 uv;
+// out vec2 pos;
 
-layout(location = 0) out VertexOutput output;
-layout(location = 3) out flat float texIndex;
+uniform mat4 projection;
+uniform mat4 model;
 
 void main()
 {
-    output.color = color;
-    output.texCoords = 
+    uv = a_uv;
+    // pos = a_pos.xy;
+    gl_Position = projection * model * vec4(a_pos, 1.0);
+    // pos = gl_Position.xy;
 }
 

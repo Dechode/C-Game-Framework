@@ -5,7 +5,7 @@
 
 ArrayList* arrayListCreate(size_t itemSize, size_t initialCapacity)
 {
-    ArrayList* list = malloc(sizeof(ArrayList));
+    ArrayList* list = (ArrayList*) malloc(sizeof(ArrayList));
     if (!list)
     {
         printf("Could not allocate memory for array list\n");
@@ -14,7 +14,7 @@ ArrayList* arrayListCreate(size_t itemSize, size_t initialCapacity)
     list->itemSize = itemSize;
     list->capacity = initialCapacity;
     list->len = 0;
-    list->items = malloc(itemSize * initialCapacity);
+    list->items = (void*) malloc(itemSize * initialCapacity);
 
     if (!list->items)
     {
@@ -38,7 +38,7 @@ size_t arrayListAppend(ArrayList* list, void* item)
         list->items = items;
     }
     size_t index = list->len++;
-    memcpy((uint8_t*)list->items + index * list->itemSize, item, list->itemSize);
+    memcpy((void*)list->items + index * list->itemSize, item, list->itemSize);
     return index;
 }
 
@@ -49,7 +49,8 @@ void *arrayListGet(ArrayList *list, size_t index)
         printf("Index out of bounds\n");
         return NULL;
     }
-    return (uint8_t*)list->items + index * list->itemSize;
+    // return (uint8_t*)list->items + index * list->itemSize;
+    return (void*)list->items + index * list->itemSize;
 }
 
 uint8_t arrayListRemove(ArrayList *list, size_t index)

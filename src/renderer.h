@@ -25,6 +25,7 @@ typedef struct
 	uint32_t windowHeight;
     
     uint32_t defaultShader;
+	uint32_t circleShader;
 	uint32_t defaultTexture;
 
     mat4x4 projection;
@@ -33,7 +34,7 @@ typedef struct
 
 typedef struct
 {
-	uint32_t texture;
+	uint32_t id;
 	unsigned char* textureData;
 	int width;
 	int height;
@@ -54,7 +55,7 @@ uint32_t createShader(const char *pathFrag, const char *pathVert);
 SDL_Window* initWindow(uint32_t width, uint32_t height, const char* title);
 void initRenderer(void);
 
-void initShaders(RenderState2D *state);
+void initShaders(void);
 void initColorTexture(uint32_t* texture); 
 void initSprite(Sprite* sprite, const char* texturePath ,vec3 pos, vec2 scale);
 void initImageTexture(ImageTexture* texture, const char* path);
@@ -72,4 +73,5 @@ void renderLineSegment(vec2 start, vec2 end, vec4 color, int lineWidth);
 void renderQuadLine(vec2 pos, vec2 size, vec4 color, int lineWidth);
 
 void drawSprite(Sprite* sprite);
+void drawCircle(const float radius, const vec2 pos);
 

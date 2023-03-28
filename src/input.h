@@ -10,8 +10,10 @@ typedef enum
 
 typedef struct
 {
-	KeyState Left;
+	KeyState left;
 	KeyState right;
+	KeyState up;
+	KeyState down;
 	KeyState escape;
 } InputState;
 

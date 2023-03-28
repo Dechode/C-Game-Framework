@@ -1,19 +1,21 @@
 #version 330 core
-layout(location = 0) out vec4 color;
-layout(location = 1) out int color2;
 
-struct VertexOutput
-{
-		vec3 localPosition;
-		vec4 color;
-		float thickness;
-		float fade;
-};
+out vec4 fragColor;
+in vec2 uv;
+// in vec2 pos;
 
-layout(location = 0) in VertexOutput input;
+uniform vec4 color;
+uniform sampler2D textureID;
 
 void main()
 {
-	vec3 circleColor = vec3(0.85, 0.35, 0.2);
-	
+	fragColor.rg = uv;
+	fragColor.b = 0.0;
+	fragColor.a = 0.0;
+	float distance = 1.0 - length(uv * 2.0 - 1.0);
+	distance = smoothstep(0.0, 0.03, distance);
+	if (distance > 0.0)
+		fragColor.a = 1.0;
+//	fragColor = texture(textureID, uv) * color;
+	fragColor.rgb = vec3(distance);
 }
