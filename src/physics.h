@@ -27,6 +27,13 @@ typedef struct
 
 typedef struct
 {
+	vec2 position;
+	float sin;
+	float cos;
+} Transform2D;
+
+typedef struct
+{
     CollisionShape collisionShape;
     int8_t kinematic;
     int8_t active;
@@ -75,6 +82,8 @@ int createPhysicsBody2D(const vec2 size, const vec2 position, const vec2 velocit
                         const float mass, const float density, const float restitution, const uint8_t kinematic,
                         CollisionShape shape);
 
+Transform2D createTransform2D(const vec2 pos, const float angle);
+
 PhysicsBody2D *getPhysicsBody2D(size_t id);
 void movePhysicsBody2D(PhysicsBody2D *body, vec2 const amount);
 void setVelocityPhysicsBody2D(PhysicsBody2D *body, const vec2 velocity);
@@ -93,7 +102,6 @@ CollisionInfo isCircleColliding(const float ra, const float rb, const vec2 posA,
 CollisionInfo isColliding(PhysicsBody2D *bodyA, PhysicsBody2D *bodyB);
 void windowCollision(PhysicsBody2D *body, float dt);
 
-// TODO
 void broadPhaseSweep(void);
 void narrowPhaseSweep(void);
 

@@ -1,11 +1,13 @@
 #include "physics.h"
 
+#include <SDL2/SDL_scancode.h>
 #include <float.h>
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 
 #include "array_list.h"
+#include "glad/glad.h"
 #include "linmath.h"
 #include "renderer.h"
 
@@ -19,6 +21,12 @@ float dotProduct(const float *a, const float *b, int n)
         result += a[i] * b[i];
     }
     return result;
+}
+
+void vec2_transform(vec2 o, const Transform2D *t, const vec2 v)
+{
+    o[0] = t->cos * v[0] - t->sin * v[1] + t->position[0];
+    o[1] = t->sin * v[0] + t->cos * v[1] + t->position[1];
 }
 
 void initPhysicsState2D(const vec2 gravity, const float terminalVelocity, const int FPS, const uint8_t iterations)
@@ -132,6 +140,17 @@ void applyForcePhysicsBody2D(PhysicsBody2D *body, const vec2 force)
 {
     body->acceleration[0] += force[0] * body->invMass;
     body->acceleration[1] += force[1] * body->invMass;
+}
+
+Transform2D createTransform2D(const vec2 pos, const float angle)
+{
+    Transform2D transform = {0};
+    transform.position[0] = pos[0];
+    transform.position[1] = pos[1];
+
+    transform.sin = sinf(angle);
+    transform.cos = cosf(angle);
+    return transform;
 }
 
 void minMaxAABB(vec2 min, vec2 max, AABB aabb)
@@ -263,14 +282,14 @@ CollisionInfo rayIntersectAABB(const vec2 position, const vec2 magnitude, AABB a
 static void projectVertices(float *min, float *max, const vec2 vertexPositions[], const uint32_t verticeCount,
                             const vec2 normal)
 {
-    *min = FLT_MIN;
-    *max = FLT_MAX;
+    *min = FLT_MAX;
+    *max = FLT_MIN;
 
     for (int i = 0; i < verticeCount; i++)
     {
         vec2 v = {0};
         vec2_dup(v, vertexPositions[i]);
-        float proj = dotProduct(v, normal, 2);
+        float proj = dotProduct(normal, v, 2);
 
         if (proj < *min)
             *min = proj;
@@ -279,33 +298,62 @@ static void projectVertices(float *min, float *max, const vec2 vertexPositions[]
     }
 }
 
+void vec2_mean(vec2 v, const vec2 a[], const int count)
+{
+    float sumX = 0.0f;
+    float sumY = 0.0f;
+
+    for (int i = 0; i < count; i++)
+    {
+        sumX += a[i][0];
+        sumY += a[i][1];
+    }
+    vec2 sumVec = {sumX / (float)count,
+                   sumY / (float)count};
+    vec2_dup(v, sumVec);
+}
+
 CollisionInfo isPolygonColliding(vec2 vertexPositionsA[], const uint32_t vertexCountA, vec2 vertexPositionsB[],
                                  const uint32_t vertexCountB)
 {
     CollisionInfo collision = {0};
+    float depth = FLT_MAX;
+    vec2 normal = {0};
 
     for (int i = 0; i < vertexCountA; i++)
     {
         vec2 va = {0};
         vec2 vb = {0};
         vec2_dup(va, vertexPositionsA[i]);
-        vec2_dup(vb, vertexPositionsA[i] + 1 % vertexCountA);
+        vec2_dup(vb, vertexPositionsA[(i + 1) % vertexCountA]);
 
         vec2 edge = {0};
         vec2_sub(edge, vb, va);
-
-        vec2 normal = {0};
-        normal[0] = -edge[1];
-        normal[1] = edge[0];
+        
+        vec2 axis = {0};
+        axis[0] = -edge[1];
+        axis[1] = edge[0];
+        if (vec2_len(axis) > 1.0f)
+        {
+            vec2_norm(axis, axis);
+        }
 
         float minA, minB, maxA, maxB;
-        projectVertices(&minA, &maxA, vertexPositionsA, vertexCountA, normal);
-        projectVertices(&minB, &maxB, vertexPositionsB, vertexCountB, normal);
+        projectVertices(&minA, &maxA, vertexPositionsA, vertexCountA, axis);
+        projectVertices(&minB, &maxB, vertexPositionsB, vertexCountB, axis);
 
         if (minA >= maxB || minB >= maxA)
         {
             collision.colliding = 0;
-			return collision;
+            return collision;
+        }
+
+        float axisDepth = fminf(maxB - minA, maxA - minB);
+
+        if (axisDepth < depth)
+        {
+            depth = axisDepth;
+            vec2_dup(normal, axis);
         }
     }
 
@@ -318,42 +366,98 @@ CollisionInfo isPolygonColliding(vec2 vertexPositionsA[], const uint32_t vertexC
 
         vec2 edge = {0};
         vec2_sub(edge, vb, va);
-
-        vec2 normal = {0};
-        normal[0] = -edge[1];
-        normal[1] = edge[0];
+        
+        vec2 axis = {0};
+        axis[0] = -edge[1];
+        axis[1] = edge[0];
+        if (vec2_len(axis) > 1.0f)
+        {
+            vec2_norm(axis, axis);
+        }
 
         float minA, minB, maxA, maxB;
-        projectVertices(&minA, &maxA, vertexPositionsA, vertexCountA, normal);
-        projectVertices(&minB, &maxB, vertexPositionsB, vertexCountB, normal);
+        projectVertices(&minA, &maxA, vertexPositionsA, vertexCountA, axis);
+        projectVertices(&minB, &maxB, vertexPositionsB, vertexCountB, axis);
 
-        if (minA >= maxB || minB >= maxA)
+        float axisDepth = fminf(maxB - minA, maxA - minB);
+
+        if (axisDepth < depth)
         {
-            collision.colliding = 0;
-			return collision;
+            depth = axisDepth;
+            vec2_dup(normal, axis);
         }
     }
 
-	collision.colliding = 1;
+    collision.colliding = 1;
+    depth /= vec2_len(normal);
+    collision.depth = depth;
+
+    if (vec2_len(normal) > 1.0f)
+    {
+        vec2_norm(normal, normal);
+    }
+
+    vec2 centerA = {0};
+    vec2_mean(centerA, vertexPositionsA, 4);
+    
+    vec2 centerB = {0};
+    vec2_mean(centerB, vertexPositionsB, 4);
+
+    vec2 direction = {0};
+    vec2_sub(direction, centerB, centerA);
+
+    if (dotProduct(direction, normal, 2) > 0.0f)
+    {
+        normal[0] *= -1;
+        normal[1] *= -1;
+    }
+    
+    vec2_dup(collision.normal, normal);
+
     return collision;
+}
+
+void createBoxVertices(vec2 vertices[], const float width, const float height)
+{
+    float left = -width * 0.5f;
+    float right = left + width;
+    float bottom = -height * 0.5f;
+    float top = bottom + height;
+
+    vec2_dup(vertices[0], (vec2){left, top});
+    vec2_dup(vertices[1], (vec2){right, top});
+    vec2_dup(vertices[2], (vec2){right, bottom});
+    vec2_dup(vertices[3], (vec2){left, bottom});
 }
 
 CollisionInfo isRectColliding(const Rect *rectA, const Rect *rectB)
 {
-	CollisionInfo collision = {0};
-	
-	vec2 transformedVertexPositionsA[4];
-	vec2 transformedVertexPositionsB[4];
-	for (int i = 0; i < 4; i++)
-	{
-		vec2 tmp;
-		// Get transformed vertices
-		vec2_dup(transformedVertexPositionsA[i], tmp);
-	}
+    CollisionInfo collision = {0};
 
-	collision = isPolygonColliding(transformedVertexPositionsA, 4, transformedVertexPositionsB, 4);
+    vec2 transformedVertexPositionsA[4];
+    vec2 transformedVertexPositionsB[4];
+    vec2 verticesA[4];
+    vec2 verticesB[4];
+    createBoxVertices(verticesA, rectA->size[0], rectA->size[1]);
+    createBoxVertices(verticesB, rectB->size[0], rectB->size[1]);
+    Transform2D transformA = createTransform2D(rectA->position, rectA->rotation);
+    Transform2D transformB = createTransform2D(rectB->position, rectB->rotation);
 
-	return collision;
+    for (int i = 0; i < 4; i++)
+    {
+        vec2 tmp;
+        vec2_dup(tmp, verticesA[i]);
+        vec2_transform(tmp, &transformA, tmp);
+        vec2_dup(transformedVertexPositionsA[i], tmp);
+        
+        vec2_dup(tmp, verticesB[i]);
+        vec2_transform(tmp, &transformB, tmp);
+        vec2_dup(transformedVertexPositionsB[i], tmp);
+    }
+
+    collision = isPolygonColliding(transformedVertexPositionsA, 4, transformedVertexPositionsB, 4);
+
+    return collision;
 }
 
 CollisionInfo isCircleColliding(const float ra, const float rb, const vec2 posA, const vec2 posB)
@@ -440,22 +544,25 @@ void narrowPhaseSweep(void)
 {
     for (size_t i = 0; i < physicsState.collidingBodyCount - 1; i++)
     {
-		int aID = physicsState.collidingBodies[i];
+        int aID = physicsState.collidingBodies[i];
         PhysicsBody2D *bodyA = getPhysicsBody2D(aID);
         for (size_t j = i + 1; j < physicsState.collidingBodyCount; j++)
         {
             int bID = physicsState.collidingBodies[j];
-			PhysicsBody2D *bodyB = getPhysicsBody2D(bID);
+            PhysicsBody2D *bodyB = getPhysicsBody2D(bID);
 
             if (!bodyA || !bodyB)
-			{
-				printf("Physics bodies are null!\n");
-				continue;
-			}
+            {
+            		printf("Physics bodies are null!\n");
+        				continue;
+            }
 
             CollisionInfo hit = isColliding(bodyA, bodyB);
             if (hit.colliding)
             {
+                printf("Body ID:s %d and %d are colliding\n", bodyA->id, bodyB->id);
+                printf("Hit depth = %2.2f\n", hit.depth);
+                printf("Hit normal = %2.2f, %2.2f\n", hit.normal[0], hit.normal[1]);
                 // kinematic only?
                 vec2 amount = {0};
                 amount[0] = hit.normal[0] * hit.depth * 0.5f;
@@ -515,9 +622,19 @@ void physicsUpdate(const float dt)
         updatePhysicsBody2D(body, dt);
         windowCollision(body, dt);
     }
-    // TODO
-    // Broad phase sweep
+
     broadPhaseSweep();
-    // narrow phase sweep
     narrowPhaseSweep();
+
+    // Late update
+    // for (size_t bodyID = 0; bodyID < physicsState.physicsBodies->len; bodyID++)
+    // {
+    //     body = (PhysicsBody2D *)arrayListGet(physicsState.physicsBodies, bodyID);
+    //     if (!body->active)
+    //     {
+    //         continue;
+    //     }
+
+    // 		windowCollision(body, dt);
+    // }
 }

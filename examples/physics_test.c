@@ -7,7 +7,7 @@
 static int width = 800;
 static int height = 600;
 
-#define BODY_COUNT 20
+#define BODY_COUNT 8
 
 void printVec2(vec2 a)
 {
@@ -45,8 +45,8 @@ void run(SDL_Window *window)
 	SDL_Event event;
 
 	initInputState(&inputState);
-	initPhysicsState2D((vec2){0.0f, -10.0f}, 10000.0f, 144, 4);
-	// initPhysicsState2D((vec2){0.0f, 0.0f}, 1000.0f, 144, 4);
+	// initPhysicsState2D((vec2){0.0f, -10.0f}, 10000.0f, 144, 4);
+	initPhysicsState2D((vec2){0.0f, 0.0f}, 1000.0f, 144, 4);
 
 	struct timeval t0, t1;
 	float deltaTime = 0.007f;
@@ -56,13 +56,13 @@ void run(SDL_Window *window)
 
 	for (int i = 0; i < BODY_COUNT; i++)
 	{
-		physicsBodiesList[i] = createPhysicsBody2D((vec2){10.0f, 10.0f}, (vec2){140.0f + (i * 20), (1 + i) * 20.0f},
-											 (vec2){00.0f, 00.0f}, 0.0f, 100.0f, 1.0f, 1.0f, 0, CIRCLE);
+		physicsBodiesList[i] = createPhysicsBody2D((vec2){50.0f, 50.0f}, (vec2){140.0f + (i * 70), (1 + i) * 70.0f},
+											 (vec2){00.0f, 00.0f}, 0.0f, 100.0f, 1.0f, 1.0f, 1, RECTANGLE);
 		printf("Body id %d = %zu\n", i, physicsBodiesList[i]);
 	}
 
-	size_t player = createPhysicsBody2D((vec2){10.0f, 10.0f}, (vec2){100.0f, 200.0f },
-											 (vec2){30.0f, 33.0f}, 0.0f, 100.0f, 1.0f, 1.0f, 1, CIRCLE);
+	size_t player = createPhysicsBody2D((vec2){50.0f, 50.0f}, (vec2){100.0f, 200.0f },
+											 (vec2){30.0f, 33.0f}, 0.0f, 100.0f, 1.0f, 1.0f, 1, RECTANGLE);
 	
 	PhysicsBody2D* playerBody = getPhysicsBody2D(player);
 	if (!playerBody)
@@ -87,8 +87,8 @@ void run(SDL_Window *window)
 		{
 			vec2_norm(input, input);
 		}
-		vel[0] = input[0] * 500.0f;
-		vel[1] = input[1] * 500.0f;
+		vel[0] = input[0] * 300.0f;
+		vel[1] = input[1] * 300.0f;
 		setVelocityPhysicsBody2D(playerBody, vel);
 
 		physicsUpdate(deltaTime);
