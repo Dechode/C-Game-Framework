@@ -1,4 +1,5 @@
 ./physics_test
+physics_test
 ./example
 *.out
 
