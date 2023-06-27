@@ -1,4 +1,4 @@
-physics_test
-example
+./physics_test
+./example
 *.out
 
